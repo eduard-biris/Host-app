@@ -11,16 +11,9 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.(js|jsx)?$/,
-                exclude: /node_modules/,
-                use: [
-                    {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ["@babel/preset-env", "@babel/preset-react"],
-                    },
-                    },
-                ],
+            test: /\.(js|jsx|ts|tsx)?$/,
+            exclude: /node_modules/,
+            loader: 'ts-loader',
             },
             {
                 test: /\.css$/i,
@@ -51,7 +44,7 @@ module.exports = {
         }),
     ],
     resolve: {
-        extensions: [".js", ".jsx"],
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
     },
     target: "web",
 };
