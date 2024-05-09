@@ -4,6 +4,24 @@ import useFetch from 'react-fetch-hook';
 const MicroFrontendsAppSupportedTypes = lazy(() => import('MicroFrontendsApp/SupportedTypes'));
 const Component = lazy(() => import('MicroFrontendsApp/Timelines/TimelineView'));
 
+/*
+  Ilustratii de implementat:
+  - Sunburst - ?
+  - Scatter - ?
+  - PieChart - DA
+  - LineChart - DA
+  - BarChart - DA
+  - Calendar - DA
+  
+  Ilustratii implementate:
+  - Timeline
+*/
+
+const SecondLibSupportedTypes = lazy(() => import('SecondMfApp/SupportedTypes'));
+const SecondLibComponent = lazy(() => import('SecondMfApp/Component')); 
+
+// 25 mai -> aplicatie + parte scrisa gata (draft)
+
 function App() {
 
   const data = {
@@ -106,22 +124,29 @@ function App() {
   const { isLoading: visLoading, data: storedVis } = useFetch('http://localhost:8000/visualisations');
 
   const [
-    microFrontendsAppComponentStore,
-    setMicroFrontendsAppComponentStore
-  ] = useState({
-    name: 'MicroFrontendsApp',
-    component: Component,
-    types: [],
-  });
+    componentStores,
+    setComponentStores
+  ] = useState([
+    // {
+    //   name: 'MicroFrontendsApp',
+    //   component: Component,
+    //   types: [],
+    // },
+    // {
+    //   name: 'SecondLibApp',
+    //   component: SecondLibComponent,
+    //   types: [],
+    // }
+  ]);
 
 
   const [componentToRender, setComponentToRender] = useState();
 
   useEffect(() => {
-    if(microFrontendsAppComponentStore && storedVis) {
+    if(componentStores && storedVis) {
       console.log('Both here: ');
 
-      console.log('mfAvComponents: ', microFrontendsAppComponentStore);
+      console.log('mfAvComponents: ', componentStores);
       console.log('storedVis: ', storedVis);
 
       storedVis.visualisations.forEach(vis => {
@@ -129,10 +154,14 @@ function App() {
 
         const type = vis.type;
         // const type = 'TestComponentOne';
+        // const type = 'SecondLibTestTwo';
+        // const type = 'UnknownType';
 
         const findComponentToRender = (type: string) => {
-          if(microFrontendsAppComponentStore.types.find(t => t === type)) {
-            return microFrontendsAppComponentStore.component;
+          for (const store of componentStores) {
+            if(store.types.find(t => t === type)) {
+              return store.component;
+            }
           }
 
           return () => (<>Component not supported!</>);
@@ -142,21 +171,41 @@ function App() {
 
         console.log('Type: ', type);
 
-        setComponentToRender(<Component type={type} data={data}/>)
+        setComponentToRender(<Component type={type} data={data} message={'my message'}/>)
       });
     }
-  }, [microFrontendsAppComponentStore, storedVis]);
+  }, [componentStores, storedVis]);
+
+  const pushIntoStores = (newStore) => {
+    console.log('Updating store with: ', newStore);
+    const currentStores = componentStores;
+    currentStores.push(newStore);
+    setComponentStores(currentStores);
+  };
 
   return (
     <Suspense fallback={'Loading...'}>
       <MicroFrontendsAppSupportedTypes
         getAvailableComponents={true}
         onRetrieve={(types: any) => {
-          setMicroFrontendsAppComponentStore({
-            ...microFrontendsAppComponentStore,
-            types: types,
+          pushIntoStores({
+            name: 'MicroFrontendsApp',
+            component: Component,
+            types,
           })
-        }}/>
+        }}
+      />
+
+      <SecondLibSupportedTypes
+        getAvailableComponents={true}
+        onRetrieve={(types: any) => {
+          pushIntoStores({
+            name: 'SecondLibApp',
+            component: SecondLibComponent,
+            types,
+          });
+        }}
+      />
 
       { componentToRender }
     </Suspense>

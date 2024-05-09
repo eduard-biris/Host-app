@@ -28,7 +28,8 @@ module.exports = {
         new ModuleFederationPlugin({
             name: "HomeApp",
             remotes: {
-                "MicroFrontendsApp": "MicroFrontendsApp@http://localhost:3001/remoteEntry.js",  
+                "MicroFrontendsApp": "MicroFrontendsApp@http://localhost:3001/remoteEntry.js", 
+                "SecondMfApp": "SecondMfApp@http://localhost:3022/remoteEntry.js"
             },
             shared: {
                 ...dependencies,
