@@ -1,49 +1,86 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import './App.css';
+import useFetch from 'react-fetch-hook';
 
-const ErrorDialog = lazy(() => import('MicroFrontendsApp/Dialogs/ErrorDialog'));
-const AddProjectDialog = lazy(() => import('MicroFrontendsApp/Dialogs/AddProjectDialog'));
-const DeleteProjectDialog = lazy(() => import('MicroFrontendsApp/Dialogs/DeleteProjectDialog'));
-const DeleteIllustrationDialog = lazy(() => import('MicroFrontendsApp/Dialogs/DeleteIllustrationDialog'));
+const MicroFrontendsAppSupportedTypes = lazy(() => import('MicroFrontendsApp/SupportedTypes'));
+const Component = lazy(() => import('MicroFrontendsApp/Illustry/WraperComponent'));
+
+const SecondLibSupportedTypes = lazy(() => import('SecondMfApp/SupportedTypes'));
+const SecondLibComponent = lazy(() => import('SecondMfApp/Component')); 
+
+const { testData } = require('./test_data');
 
 function App() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
-  const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
-  const [showDeleteProjectDialog, setShowDeleteProjectDialog] = useState(false);
-  const [showDeleteIllustrationDialog, setShowDeleteIllustrationDialog] = useState(false);
-  
+  const { isLoading: visLoading, data: storedVis } = useFetch('http://localhost:8000/visualisations');
+
+  const [componentStores, setComponentStores] = useState([]);
+  const [componentToRender, setComponentToRender] = useState();
+
+  useEffect(() => {
+    if(componentStores && storedVis) {
+      console.log('Both here: ');
+
+      console.log('mfAvComponents: ', componentStores);
+      console.log('storedVis: ', storedVis);
+
+      storedVis.visualisations.forEach(vis => {
+        console.log('vis: ', vis);
+
+        // const type = vis.type;
+
+        const type = 'PiechartView';
+        const testProps = testData[type];
+
+        const findComponentToRender = (type: string) => {
+          for (const store of componentStores) {
+            if(store.types.find(t => t === type)) {
+              return store.component;
+            }
+          }
+
+          return () => (<>Component not supported!</>);
+        };
+
+        const Component = findComponentToRender(type);
+
+        console.log('Type: ', type);
+
+        setComponentToRender(<Component type={type} props={testProps}/>)
+      });
+    }
+  }, [componentStores, storedVis]);
+
+  const pushIntoStores = (newStore) => {
+    console.log('Updating store with: ', newStore);
+    const currentStores = componentStores;
+    currentStores.push(newStore);
+    setComponentStores(currentStores);
+  };
+
   return (
     <Suspense fallback={'Loading...'}>
-      <ErrorDialog 
-        showDialog={showErrorDialog}
-        onConfirm={() => {setShowErrorDialog(false)}}
+      <MicroFrontendsAppSupportedTypes
+        getAvailableComponents={true}
+        onRetrieve={(types: any) => {
+          pushIntoStores({
+            name: 'MicroFrontendsApp',
+            component: Component,
+            types,
+          })
+        }}
       />
 
-      <AddProjectDialog
-        showDialog={showAddProjectDialog}
-        onConfirm={() => {setShowAddProjectDialog(false)}}
+      <SecondLibSupportedTypes
+        getAvailableComponents={true}
+        onRetrieve={(types: any) => {
+          pushIntoStores({
+            name: 'SecondLibApp',
+            component: SecondLibComponent,
+            types,
+          });
+        }}
       />
 
-      <DeleteProjectDialog
-        showDialog={showDeleteProjectDialog}
-        onCancel={() => {setShowDeleteProjectDialog(false)}}
-        onConform={() => {setShowDeleteProjectDialog(false)}}
-        projectName='Test Project'
-      />
-
-      <DeleteIllustrationDialog
-        showDialog={showDeleteIllustrationDialog}
-        onCancel={() => {setShowDeleteIllustrationDialog(false)}}
-        onConform={() => {setShowDeleteIllustrationDialog(false)}}
-        illustrationName='Test Illustration'
-      />
-
-      <button type='button' onClick={() => setShowDialog(!showDialog)}>ShowDialog</button>
-      <button type='button' onClick={() => setShowErrorDialog(!showErrorDialog)}>ShowErrorDialog</button>
-      <button type='button' onClick={() => setShowAddProjectDialog(!showAddProjectDialog)}>ShowAddProjectDialog</button>
-      <button type='button' onClick={() => setShowDeleteProjectDialog(!showDeleteProjectDialog)}>showDeleteProjectDialog</button>
-      <button type='button' onClick={() => setShowDeleteIllustrationDialog(!showDeleteIllustrationDialog)}>showDeleteIllustrationDialog</button>
+      { componentToRender }
     </Suspense>
   );
 }

@@ -3,21 +3,21 @@ const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPl
 const { dependencies } = require("./package.json");
 
 module.exports = {
-    entry: "./src/entry",
+    entry: "./src/entry.js",
     mode: "development",
     devServer: {
-        port: 3000,
+        port: 3002,
     },
     module: {
         rules: [
             {
-            test: /\.(js|jsx|ts|tsx)?$/,
-            exclude: /node_modules/,
-            loader: 'ts-loader',
+                test: /\.(js|jsx|ts|tsx)?$/,
+                exclude: /node_modules/,
+                use: ['ts-loader'],
             },
             {
                 test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
+                use: ["style-loader", "css-loader", "postcss-loader"],
             },
         ],
     },
@@ -28,7 +28,8 @@ module.exports = {
         new ModuleFederationPlugin({
             name: "HomeApp",
             remotes: {
-                "MicroFrontendsApp": "MicroFrontendsApp@http://localhost:3001/remoteEntry.js",  
+                "MicroFrontendsApp": "MicroFrontendsApp@http://localhost:3001/remoteEntry.js", 
+                "SecondMfApp": "SecondMfApp@http://localhost:3022/remoteEntry.js"
             },
             shared: {
                 ...dependencies,
