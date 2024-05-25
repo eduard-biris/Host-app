@@ -2,85 +2,50 @@ import React, { lazy, Suspense, useEffect, useState } from 'react';
 import useFetch from 'react-fetch-hook';
 
 const MicroFrontendsAppSupportedTypes = lazy(() => import('MicroFrontendsApp/SupportedTypes'));
-const Component = lazy(() => import('MicroFrontendsApp/Illustry/WraperComponent'));
-
-const SecondLibSupportedTypes = lazy(() => import('SecondMfApp/SupportedTypes'));
-const SecondLibComponent = lazy(() => import('SecondMfApp/Component')); 
-
-const { testData } = require('./test_data');
+const WraperComponent = lazy(() => import('MicroFrontendsApp/Illustry/WraperComponent'));
 
 function App() {
   const { isLoading: visLoading, data: storedVis } = useFetch('http://localhost:8000/visualisations');
 
-  const [componentStores, setComponentStores] = useState([]);
-  const [componentToRender, setComponentToRender] = useState();
+  const [mfSupportedTypes, setMfSupportedTypes] = useState();
+  const [supportedVisualisations, setSupportedVisualisations] = useState();
 
   useEffect(() => {
-    if(componentStores && storedVis) {
-      console.log('Both here: ');
+    if(storedVis?.visualisations?.length && mfSupportedTypes?.length) {
+      console.log('In if: ', mfSupportedTypes, storedVis);
+      const supportedVisualisationsArray = [];
 
-      console.log('mfAvComponents: ', componentStores);
-      console.log('storedVis: ', storedVis);
+      storedVis.visualisations.forEach((vis) => {
+        if(mfSupportedTypes.includes(vis.visualization.type)) {
+          supportedVisualisationsArray.push(vis);
+        }
+      })
 
-      storedVis.visualisations.forEach(vis => {
-        console.log('vis: ', vis);
-
-        // const type = vis.type;
-
-        const type = 'PiechartView';
-        const testProps = testData[type];
-
-        const findComponentToRender = (type: string) => {
-          for (const store of componentStores) {
-            if(store.types.find(t => t === type)) {
-              return store.component;
-            }
-          }
-
-          return () => (<>Component not supported!</>);
-        };
-
-        const Component = findComponentToRender(type);
-
-        console.log('Type: ', type);
-
-        setComponentToRender(<Component type={type} props={testProps}/>)
-      });
+      setSupportedVisualisations(supportedVisualisationsArray);
     }
-  }, [componentStores, storedVis]);
-
-  const pushIntoStores = (newStore) => {
-    console.log('Updating store with: ', newStore);
-    const currentStores = componentStores;
-    currentStores.push(newStore);
-    setComponentStores(currentStores);
-  };
+  }, [mfSupportedTypes, storedVis]);
 
   return (
     <Suspense fallback={'Loading...'}>
+
       <MicroFrontendsAppSupportedTypes
         getAvailableComponents={true}
         onRetrieve={(types: any) => {
-          pushIntoStores({
-            name: 'MicroFrontendsApp',
-            component: Component,
-            types,
-          })
+            console.log('Got supported types: ', types);
+            setMfSupportedTypes(types);
         }}
       />
 
-      <SecondLibSupportedTypes
-        getAvailableComponents={true}
-        onRetrieve={(types: any) => {
-          pushIntoStores({
-            name: 'SecondLibApp',
-            component: SecondLibComponent,
-            types,
-          });
-        }}
-      />
+        { supportedVisualisations?.length && supportedVisualisations.map((vis) => {
+            return (
+              <div>
+                {vis._id} - {vis.visualization.type}
+                <WraperComponent type={vis.visualization.type} props={vis.visualization.data} />
+              </div>
+            );
+          }) 
+        }
 
-      { componentToRender }
     </Suspense>
   );
 }
