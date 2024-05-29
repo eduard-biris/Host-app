@@ -1,0 +1,35 @@
+.app-header {
+    display: flex; 
+    width: fit-content;
+    font-weight: bold;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.button {
+    width: fit-content;
+    min-width: 50px;
+    padding: 2px;
+    border-radius: 5px;
+    background-color: lightgray;
+}
+
+.button:hover {
+    cursor: pointer;
+    background-color: gray;
+}
+
+.list-row {
+    margin-bottom: 25px;
+}
+
+.vis-header {
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: inline;
+    margin-right: 10px;
+}
+
+.vis-name {
+    color: darkblue;
+}
